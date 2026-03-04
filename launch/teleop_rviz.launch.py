@@ -48,12 +48,29 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Bridge node receiving UDP from Windows
+    bridge_node = Node(
+        package='teleop_slave',
+        executable='master_bridge_node',
+        name='master_bridge_node',
+        output='screen'
+    )
+
+    # Gripper slave node
+    gripper_node = Node(
+        package='teleop_slave',
+        executable='tesollo_slave_node',
+        name='tesollo_slave_node',
+        output='screen'
+    )
+
     return LaunchDescription([
         rsp_launch,
         rviz_node,
         lowlevel_node,
+        bridge_node,
         TimerAction(
             period=2.0,  # Wait a bit for the low-level to establish services
-            actions=[slave_node, curobo_node]
+            actions=[slave_node, curobo_node, gripper_node]
         )
     ])
