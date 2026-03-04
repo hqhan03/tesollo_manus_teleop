@@ -476,21 +476,23 @@ void FairinoControllerNode::publishJointStates()
         for(int i=0; i<NUM_JOINTS; ++i) jpos.jPos[i] = dummy_joint_positions_[i];
     }
 
-    bool all_zero = true;
-    for (int i = 0; i < NUM_JOINTS; ++i) {
-        if (std::abs(jpos.jPos[i]) > 0.001) {
-            all_zero = false;
-            break;
+    if (!dummy_mode_) {
+        bool all_zero = true;
+        for (int i = 0; i < NUM_JOINTS; ++i) {
+            if (std::abs(jpos.jPos[i]) > 0.001) {
+                all_zero = false;
+                break;
+            }
         }
-    }
 
-    if (!all_zero) {
-        last_valid_joints_ = jpos;
-        has_valid_joints_ = true;
-    } else if (has_valid_joints_) {
-        jpos = last_valid_joints_;
-    } else {
-        return;
+        if (!all_zero) {
+            last_valid_joints_ = jpos;
+            has_valid_joints_ = true;
+        } else if (has_valid_joints_) {
+            jpos = last_valid_joints_;
+        } else {
+            return;
+        }
     }
 
     sensor_msgs::msg::JointState msg;
