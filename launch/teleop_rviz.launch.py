@@ -23,54 +23,7 @@ def generate_launch_description():
         arguments=['-d', rviz_config_file],
     )
 
-    # Start the low-level controller with dummy simulation mode enabled to publish to /joint_states
-    lowlevel_node = Node(
-        package='teleop_slave',
-        executable='fairino_lowlevel_controller_node',
-        name='fairino_lowlevel_controller_node',
-        output='screen',
-        parameters=[{'dummy_mode': True}]
-    )
-
-    # High-level slave node mapping Manus inputs to Robot coordinates
-    slave_node = Node(
-        package='teleop_slave',
-        executable='fairino_slave_node',
-        name='fairino_slave_node',
-        output='screen'
-    )
-
-    # Python cuRobo node
-    curobo_node = Node(
-        package='teleop_slave',
-        executable='curobo_mppi_solver.py',
-        name='curobo_mppi_solver',
-        output='screen'
-    )
-
-    # Bridge node receiving UDP from Windows
-    bridge_node = Node(
-        package='teleop_slave',
-        executable='master_bridge_node',
-        name='master_bridge_node',
-        output='screen'
-    )
-
-    # Gripper slave node
-    gripper_node = Node(
-        package='teleop_slave',
-        executable='tesollo_slave_node',
-        name='tesollo_slave_node',
-        output='screen'
-    )
-
     return LaunchDescription([
         rsp_launch,
-        rviz_node,
-        lowlevel_node,
-        bridge_node,
-        TimerAction(
-            period=2.0,  # Wait a bit for the low-level to establish services
-            actions=[slave_node, curobo_node, gripper_node]
-        )
+        rviz_node
     ])

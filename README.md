@@ -38,13 +38,32 @@ You can verify the teleoperation pipeline works correctly using a simulated visu
 ```bash
 ros2 launch teleop_slave teleop_rviz.launch.py
 ```
-This single launch file starts:
-1. `rviz2` (with the `fairino5_v6` robot description)
-2. `fairino_lowlevel_controller_node` (Simulation Mode enabled)
-3. `fairino_slave_node` (High-level controller)
-4. `curobo_mppi_solver` (Motion generation solver)
+This launch file will only start `rviz2` and the `robot_state_publisher` for the `fairino5_v6` robot.
 
-To test the motion, simply publish mock Cartesian targets to the `/manus/wrist_pose` topic, or run the `master_bridge_node` while using the VR glove.
+### Running the Nodes Individually
+For easier debugging and error checking during development, it is recommended to run each node in its own terminal. **Make sure to run `source install/setup.bash` in every new terminal.**
 
-## Working with Hardware
-To use this with the actual Fairino and Tesollo robots, set `dummy_mode:=false` when running the low-level controller. Ensure the host machine is on the same local subnet as the FR5 control box (default `192.168.58.2`).
+**Terminal 2: Low-Level Controller (Simulation Mode)**
+```bash
+ros2 run teleop_slave fairino_lowlevel_controller_node --ros-args -p dummy_mode:=true
+```
+
+**Terminal 3: Master Bridge (UDP Receiver)**
+```bash
+ros2 run teleop_slave master_bridge_node
+```
+
+**Terminal 4: cuRobo MPPI Solver (Motion Generation)**
+```bash
+ros2 run teleop_slave curobo_mppi_solver.py
+```
+
+**Terminal 5: Fairino Slave Node (Arm High-Level)**
+```bash
+ros2 run teleop_slave fairino_slave_node
+```
+
+**Terminal 6: Tesollo Slave Node (Gripper High-Level)**
+```bash
+ros2 run teleop_slave tesollo_slave_node
+```
