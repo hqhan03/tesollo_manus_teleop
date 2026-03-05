@@ -41,29 +41,48 @@ ros2 launch teleop_slave teleop_rviz.launch.py
 This launch file will only start `rviz2` and the `robot_state_publisher` for the `fairino5_v6` robot.
 
 ### Running the Nodes Individually
-For easier debugging and error checking during development, it is recommended to run each node in its own terminal. **Make sure to run `source install/setup.bash` in every new terminal.**
+For easier debugging and error checking during development, it is recommended to run each node in its own terminal. **In every new terminal, you must source the workspaces before running the node.**
+
+Below is the step-by-step command sequence you should paste into each newly opened terminal.
+
+**Terminal 1: RViz Visualization**
+```bash
+source ~/ros2_ws/install/setup.bash
+source ~/teleop_slave/install/setup.bash
+ros2 launch teleop_slave teleop_rviz.launch.py
+```
 
 **Terminal 2: Low-Level Controller (Simulation Mode)**
 ```bash
+source ~/ros2_ws/install/setup.bash
+source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave fairino_lowlevel_controller_node --ros-args -p dummy_mode:=true
 ```
 
 **Terminal 3: Master Bridge (UDP Receiver)**
 ```bash
+source ~/ros2_ws/install/setup.bash
+source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave master_bridge_node
 ```
 
 **Terminal 4: cuRobo MPPI Solver (Motion Generation)**
 ```bash
+source ~/ros2_ws/install/setup.bash
+source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave curobo_mppi_solver.py
 ```
 
 **Terminal 5: Fairino Slave Node (Arm High-Level)**
 ```bash
+source ~/ros2_ws/install/setup.bash
+source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave fairino_slave_node
 ```
 
 **Terminal 6: Tesollo Slave Node (Gripper High-Level)**
 ```bash
+source ~/ros2_ws/install/setup.bash
+source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave tesollo_slave_node
 ```
