@@ -47,33 +47,39 @@ ros2 launch teleop_slave teleop_rviz.launch.py
 ```
 This launch file will only start `rviz2` and the `robot_state_publisher` for the `fairino5_v6` robot.
 
-### Running the Nodes Individually
-For easier debugging and error checking during development, it is recommended to run each node in its own terminal. **In every new terminal, you must source the workspaces before running the node.**
+### Running the Nodes Individually (6 Terminals)
+For easier debugging and error checking during development, it is recommended to run each node in its own terminal.
+**Important:** In every new terminal, you must source the workspaces before running the node (`ros2_ws` and `teleop_slave`).
 
-Below is the step-by-step command sequence you should paste into each newly opened terminal.
-
-**Terminal 1: RViz Visualization**
+#### Terminal 1: RViz Visualization
+Starts the URDF `robot_state_publisher` and RViz so you can verify the robot model and constraints visually.
 ```bash
 source ~/ros2_ws/install/setup.bash
 source ~/teleop_slave/install/setup.bash
 ros2 launch teleop_slave teleop_rviz.launch.py
 ```
 
-**Terminal 2: Low-Level Controller (Simulation Mode)**
+#### Terminal 2: Low-Level Controller (Fairino Hardware Interface)
+Connects directly to the robot hardware via the Fairino C++ SDK (`executeServoJ()`) or acts as a mocked publisher (`dummy_mode:=true`).
+**For RViz Simulation (Hardware OFF):**
 ```bash
 source ~/ros2_ws/install/setup.bash
 source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave fairino_lowlevel_controller_node --ros-args -p dummy_mode:=true
 ```
+*(If you are connected to the physical real robot, omit the `--ros-args -p dummy_mode:=true` argument)*
 
-**Terminal 3: Master Bridge (UDP Receiver)**
+#### Terminal 3: Master Bridge (MANUS UDP Receiver)
+Receives the raw UDP packets from the VR glove on port 12345.
 ```bash
 source ~/ros2_ws/install/setup.bash
 source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave master_bridge_node
 ```
 
-**Terminal 4: cuRobo MPPI Solver (Motion Generation)**
+#### Terminal 4: cuRobo MPPI Solver (GPU Motion Generation)
+Listens for Cartesian target poses (`/curobo/pose_target`) and generates a collision-free joint stream (`/servo_target`).
+*Requires the Python virtual environment.*
 ```bash
 source ~/curobo_env/bin/activate
 source ~/ros2_ws/install/setup.bash
@@ -81,16 +87,19 @@ source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave curobo_mppi_solver.py
 ```
 
-**Terminal 5: Fairino Slave Node (Arm High-Level)**
+#### Terminal 5: Fairino Slave Node (Arm High-Level Logic)
+Maps Manus Wrist pose to the Robot Base Frame, applies safety constraints, and sends targets to the cuRobo MPPI Solver.
 ```bash
 source ~/ros2_ws/install/setup.bash
 source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave fairino_slave_node
 ```
 
-**Terminal 6: Tesollo Slave Node (Gripper High-Level)**
+#### Terminal 6: Tesollo Slave Node (Gripper Hardware Interface)
+Maps the 20-DOF Manus finger positions directly to the Tesollo DG-5F Gripper via ModbusTCP.
 ```bash
 source ~/ros2_ws/install/setup.bash
 source ~/teleop_slave/install/setup.bash
 ros2 run teleop_slave tesollo_slave_node
 ```
+*(Default IP is `169.254.186.72` and Port is `502`. If you need to change reality, add `--ros-args -p ip:="192.168.0.x" -p port:=502`)*
