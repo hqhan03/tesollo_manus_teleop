@@ -62,7 +62,9 @@ void TesolloSlaveNode::fingerJointsCallback(const sensor_msgs::msg::JointState::
     if (dummy_mode_) {
         // Build the JointTrajectory for ros2_control in Gazebo
         auto traj_msg = trajectory_msgs::msg::JointTrajectory();
-        traj_msg.header.stamp = this->get_clock()->now();
+        // Do NOT set traj_msg.header.stamp = now() here because Gazebo uses use_sim_time (starts from 0sec). 
+        // An empty stamp defaults to '0' which means the controller executes it immediately upon receipt.
+        
         // The Gazebo standard names from Tesollo's configuration right hand "rj_dg_X_X"
         traj_msg.joint_names = {
             "rj_dg_1_1", "rj_dg_1_2", "rj_dg_1_3", "rj_dg_1_4",
@@ -76,7 +78,7 @@ void TesolloSlaveNode::fingerJointsCallback(const sensor_msgs::msg::JointState::
         point.positions = delto_target;
         // The time from start tells the simulated trajectory controller how fast to reach the point
         point.time_from_start.sec = 0;
-        point.time_from_start.nanosec = 25000000; // 0.025s (40 Hz tracking curve)
+        point.time_from_start.nanosec = 100000000; // 0.1s for smooth interpolation
         
         traj_msg.points.push_back(point);
         traj_pub_->publish(traj_msg);
