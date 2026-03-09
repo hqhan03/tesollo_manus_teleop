@@ -25,8 +25,10 @@ This ROS 2 (Humble) package enables real-time teleoperation of a **Fairino FR5 m
   sudo apt install python3.10-venv
   python3 -m venv ~/curobo_env
   source ~/curobo_env/bin/activate
+  # Important: Install a PyTorch version that exactly matches your system's CUDA version!
   pip install torch torchvision torchaudio
-  pip install curobo
+  # Install cuRobo from source (Do not use `pip install curobo` as it installs a dummy package)
+  pip install --no-build-isolation git+https://github.com/NVlabs/curobo.git
   ```
 - Fairino MoveIt2 config packages (`fairino5_v6_moveit2_config` for RViz visualization/robot description)
 
