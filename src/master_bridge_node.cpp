@@ -7,6 +7,7 @@
 ManusReceiverNode::ManusReceiverNode() : Node("manus_receiver_cpp"), sockfd_(-1) {
     wrist_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("manus/wrist_pose", 10);
     joint_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("manus/finger_joints", 10);
+    fingertip_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("manus/fingertip_positions", 10);
 
     setup_udp();
 
@@ -38,7 +39,11 @@ void ManusReceiverNode::receive_callback() {
     socklen_t len = sizeof(cliaddr);
 
     ssize_t n = recvfrom(sockfd_, &packet, sizeof(packet), 0, (struct sockaddr *)&cliaddr, &len);
-    if (n == sizeof(HandDataPacket)) {
+    if (n >= (ssize_t)(sizeof(HandDataPacket) - sizeof(packet.fingertipPos))) {
+        // Zero out fingertipPos if old sender sends smaller packet
+        if (n < (ssize_t)sizeof(HandDataPacket)) {
+            memset(packet.fingertipPos, 0, sizeof(packet.fingertipPos));
+        }
         publish_data(packet);
     }
 }
@@ -89,7 +94,7 @@ void ManusReceiverNode::publish_data(const HandDataPacket& packet) {
         packet.wristQuaternion[0], packet.wristQuaternion[1], packet.wristQuaternion[2], packet.wristQuaternion[3]);
 
     printf("[Received UDP Data] Sending 20 Finger Joints...\n");
-    printf("  Thumb:  CMC_Fl/Ex=%.2f CMC_Ab/Ad=%.2f MCP_Fl/Ex=%.2f IP_Fl/Ex=%.2f\n",
+    printf("  Thumb:  MCPSpread=%.2f MCPStretch=%.2f PIPStretch=%.2f DIPStretch=%.2f\n",
         packet.fingerFlexion[0], packet.fingerFlexion[1], packet.fingerFlexion[2], packet.fingerFlexion[3]);
     printf("  Index:  MCP_Ab/Ad=%.2f MCP_Fl/Ex=%.2f PIP_Fl/Ex=%.2f DIP_Fl/Ex=%.2f\n",
         packet.fingerFlexion[4], packet.fingerFlexion[5], packet.fingerFlexion[6], packet.fingerFlexion[7]);
@@ -99,6 +104,38 @@ void ManusReceiverNode::publish_data(const HandDataPacket& packet) {
         packet.fingerFlexion[12], packet.fingerFlexion[13], packet.fingerFlexion[14], packet.fingerFlexion[15]);
     printf("  Pinky:  MCP_Ab/Ad=%.2f MCP_Fl/Ex=%.2f PIP_Fl/Ex=%.2f DIP_Fl/Ex=%.2f\n",
         packet.fingerFlexion[16], packet.fingerFlexion[17], packet.fingerFlexion[18], packet.fingerFlexion[19]);
+
+    // 3. 데이터 퍼블리시 (Fingertip Positions)
+    auto fingertip_msg = geometry_msgs::msg::PoseArray();
+    fingertip_msg.header.stamp = now;
+    fingertip_msg.header.frame_id = "palm";
+
+    const char* fingerNames[5] = {"Thumb", "Index", "Middle", "Ring", "Pinky"};
+    bool hasFingertipData = false;
+    for (int i = 0; i < 5; ++i) {
+        geometry_msgs::msg::Pose pose;
+        pose.position.x = packet.fingertipPos[i * 3 + 0];
+        pose.position.y = packet.fingertipPos[i * 3 + 1];
+        pose.position.z = packet.fingertipPos[i * 3 + 2];
+        pose.orientation.w = 1.0;  // Identity quaternion (position-only)
+        pose.orientation.x = 0.0;
+        pose.orientation.y = 0.0;
+        pose.orientation.z = 0.0;
+        fingertip_msg.poses.push_back(pose);
+        if (pose.position.x != 0.0f || pose.position.y != 0.0f || pose.position.z != 0.0f) {
+            hasFingertipData = true;
+        }
+    }
+    fingertip_pub_->publish(fingertip_msg);
+
+    // 터미널에 Fingertip 위치 출력
+    if (hasFingertipData) {
+        printf("[Fingertip Positions (Raw Skeleton)]\n");
+        for (int f = 0; f < 5; f++) {
+            printf("  %-7s: X:%.4f Y:%.4f Z:%.4f\n", fingerNames[f],
+                packet.fingertipPos[f * 3 + 0], packet.fingertipPos[f * 3 + 1], packet.fingertipPos[f * 3 + 2]);
+        }
+    }
 }
 
 

@@ -18,6 +18,7 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(yaml-cpp REQUIRED)
 
 add_library(delto_tcp_comm SHARED libdelto/delto_tcp_comm/src/delto_developer_TCP.cpp)
 target_include_directories(delto_tcp_comm PUBLIC libdelto/delto_tcp_comm/include)
@@ -53,11 +54,12 @@ ament_target_dependencies(fairino_slave_node rclcpp geometry_msgs sensor_msgs st
 
 add_executable(tesollo_slave_node src/tesollo_slave_node.cpp)
 target_include_directories(tesollo_slave_node PUBLIC include libdelto/delto_tcp_comm/include)
-target_link_libraries(tesollo_slave_node delto_tcp_comm)
+target_link_libraries(tesollo_slave_node delto_tcp_comm yaml-cpp)
 ament_target_dependencies(tesollo_slave_node
   rclcpp
   sensor_msgs
   trajectory_msgs
+  std_srvs
 )
 
 install(TARGETS
@@ -96,6 +98,11 @@ install(FILES delto_hardware.xml DESTINATION share/${PROJECT_NAME})
 
 install(DIRECTORY
   launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  config
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -12,6 +12,7 @@
 // ROS2
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_array.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
 // Windows와 데이터 포맷을 맞추기 위한 구조체
@@ -21,6 +22,7 @@ struct HandDataPacket {
     float wristPos[3];
     float wristQuaternion[4]; // w, x, y, z
     float fingerFlexion[20];
+    float fingertipPos[15]; // 5 fingertips × (X, Y, Z) — Thumb, Index, Middle, Ring, Pinky
 };
 #pragma pack(pop)
 
@@ -40,6 +42,7 @@ private:
     int sockfd_;
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr wrist_pub_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr fingertip_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
 };
 
